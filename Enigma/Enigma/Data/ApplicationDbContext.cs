@@ -1,13 +1,14 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Enigma.Data.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Enigma.Data
 {
     public class ApplicationDbContext : IdentityDbContext
     {
+        public DbSet<Counselor> Counselors { get; set; }
+        public DbSet<CounselorTemplate> CounselorTemplates { get; set; }
+
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
