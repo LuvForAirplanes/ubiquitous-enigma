@@ -1,25 +1,135 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Home";
 }
 
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.8.0/main.min.css" rel="stylesheet" />
 
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.8.0/main.min.js"></script>
+<style>
+    .container {
+        padding: 20px;
+        display: flex;
+        height: calc(100% - 90px);
+    }
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var calendarEl = document.getElementById('calendar');
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth'
-        });
-        calendar.render();
-    });
-</script>
+    .controllers.segments {
+        width: 270px;
+    }
 
-<div style="padding: 20px">
+    .ui.green.segment {
+        margin: 0 0 16px 20px;
+        flex-grow: 1;
+    }
+
+    .ui.checkbox,
+    .ui.button{
+        margin-top: 10px;
+    }
+</style>
+
+<form class="container" method="post">
+    <div class="ui controllers segments">
+        <div class="ui blue segment">
+            <h4>Generate</h4>
+            <div class="ui fluid input">
+                <input asp-for="Date" type="date" />
+            </div>
+            <div class="ui checkbox">
+                <input asp-for="Hard" />
+                <label>Hard Generate</label>
+            </div>
+            <button class="ui fluid button" asp-page-handler="AddMonthDates">Add Month Dates</button>
+            <button class="ui fluid button" asp-page-handler="AddWeekDates">Add Week Dates</button>
+            <button class="ui fluid button" asp-page-handler="AddDayDates">Add Day Dates</button>
+        </div>
+        <div class="ui teal segment">
+            <h4>Templates</h4>
+            @for (int i = 0; i < Model.Templates.Count; i++)
+            {
+                <div class="ui fluid input">
+                    <input asp-for="Templates[i]" />
+                </div>
+            }
+            <button class="ui primary button" asp-page-handler="SaveTemplates">Save</button>
+        </div>
+    </div>
     <div class="ui green segment">
         <div id='calendar'></div>
     </div>
-</div>
+
+    <div class="ui modal">
+        <i class="close icon"></i>
+        <div class="content">
+            <div class="ui input">
+                <input id="nameInput" />
+            </div>
+        </div>
+        <div class="actions">
+            <div class="ui red button" onclick="deleteEvent()">
+                Delete
+            </div>
+            <div class="ui black deny button">
+                Cancel
+            </div>
+            <div class="ui positive right labeled icon button" onclick="save()">
+                Save
+                <i class="checkmark icon"></i>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.8.0/main.min.js"></script>
+<script>
+    var calendar;
+    var id;
+
+    $(document).ready(function () {
+        var calendarEl = document.getElementById('calendar');
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: '/events',
+            height: '100%',
+            eventClick: function (info) {
+                showModal(info.event.id, info.event.title);
+            }
+        });
+
+        calendar.render();
+
+        $('#datePicker').calendar();
+    });
+
+    function refetchEvents() {
+        calendar.refetchEvents();
+    }
+
+    function showModal(localId, name) {
+        id = localId;
+        $("#nameInput").val(name);
+        $('.ui.modal').modal('show');
+    }
+
+    function save() {
+        $.ajax({
+            url: "/api/events/edit?id=" + id + "&name=" + $("#nameInput").val(),
+            method: "POST",
+            success: function () {
+                refetchEvents();
+            }
+        });
+    }
+
+    function deleteEvent() {
+        $(".ui.modal").modal("hide");
+
+        $.ajax({
+            url: "/api/events/delete?id=" + id,
+            method: "DELETE",
+            success: function () {
+                refetchEvents();
+            }
+        });
+    }
+</script>

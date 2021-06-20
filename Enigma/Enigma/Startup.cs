@@ -1,4 +1,5 @@
 using Enigma.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -6,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System;
 
 namespace Enigma
 {
@@ -30,11 +32,27 @@ namespace Enigma
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
             services.AddRazorPages();
+
+            //services.AddAuthorization(options =>
+            //{
+            //    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+            //        .RequireAuthenticatedUser()
+            //        .Build();
+            //});
+
+            services.ConfigureApplicationCookie(c =>
+            {
+                c.ExpireTimeSpan = TimeSpan.FromDays(14);
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            using (var scope = app.ApplicationServices.CreateScope())
+            using (var context = scope.ServiceProvider.GetService<ApplicationDbContext>())
+                context.Database.Migrate();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -52,12 +70,12 @@ namespace Enigma
 
             app.UseRouting();
 
-            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapRazorPages();
+                endpoints.MapControllers();
             });
         }
     }
